@@ -12,6 +12,7 @@ export default function Console({
 }: any) {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
+  const [widgetInfo, setWidgetInfo] = useState('');
   const [iconUrl, setIconUrl] = useState('');
   const [iconFile, setIconFile] = useState<string | null>(null);
   const [location, setLocation] = useState('Home');
@@ -38,24 +39,29 @@ export default function Console({
       id: apps.length > 0 ? Math.max(...apps.map((a: any) => a.id)) + 1 : 0,
       name,
       url,
+      widgetInfo,
       iconSrc: finalIconSrc,
       location
     };
 
     try {
+      console.log('Sending app payload:', newAppPayload);
       const res = await fetch('/api/apps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAppPayload)
       });
 
+      console.log('Response status:', res.status);
       if (res.ok) {
         const savedApp = await res.json();
+        console.log('Saved app:', savedApp);
         
         const newApp = {
           id: savedApp.id,
           name: savedApp.name,
           url: savedApp.url,
+          widgetInfo: savedApp.widgetInfo,
           icon: <img src={savedApp.iconSrc} alt={savedApp.name} className="w-full h-full object-cover" />,
           bg: 'bg-white'
         };
@@ -73,12 +79,17 @@ export default function Console({
         
         setName('');
         setUrl('');
+        setWidgetInfo('');
         setIconUrl('');
         setIconFile(null);
+      } else {
+        const errorText = await res.text();
+        console.error('Failed to save app, response:', errorText);
+        alert('Failed to save app: ' + errorText);
       }
     } catch (error) {
       console.error('Failed to save app:', error);
-      alert('Failed to save app');
+      alert('Failed to save app: ' + error);
     }
   };
 
@@ -143,6 +154,17 @@ export default function Console({
               onChange={e => setUrl(e.target.value)}
               className="bg-[#2a2a2a] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
               placeholder="https://..."
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-400">Widget Info</label>
+            <textarea 
+              value={widgetInfo}
+              onChange={e => setWidgetInfo(e.target.value)}
+              className="bg-[#2a2a2a] border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+              placeholder="Enter widget info..."
+              rows={3}
             />
           </div>
 

@@ -42,6 +42,7 @@ const Dashboard = ({
   newCategoryApps,
   popularCategoryApps,
   showAbout,
+  showWidgetInfo,
   menuItems
 }: { 
   selectedIndex: number, 
@@ -56,6 +57,7 @@ const Dashboard = ({
   newCategoryApps: number[],
   popularCategoryApps: number[],
   showAbout: boolean,
+  showWidgetInfo: string | null,
   menuItems: string[]
 }) => {
   const isSelected = selectedIndex !== -1;
@@ -109,11 +111,22 @@ const Dashboard = ({
       {/* Main Content / App Grid */}
       <main className="flex-1 min-h-0 relative px-2 py-1 flex flex-col justify-center overflow-hidden">
         {activeTab === 2 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className={`w-[84px] h-[84px] rounded-[28px] flex items-center justify-center relative transition-all duration-200 ${focusArea === 'grid' && selectedIndex === 0 ? 'bg-white/40 scale-105' : 'bg-transparent'}`}>
-              <div className="w-[72px] h-[72px] rounded-[22px] border-2 border-dashed border-white/40 flex items-center justify-center">
-                <Plus className="w-10 h-10 text-white/60" />
-              </div>
+          <div className="flex-1 overflow-y-auto p-2 grid grid-cols-3 gap-2 content-start">
+            {apps.filter(app => app.isPinned).map((app, index) => {
+              const isFocused = focusArea === 'grid' && selectedIndex === index;
+              return (
+                <div key={app.id} className="flex flex-col items-center gap-1">
+                  <div className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-white/10'}`}>
+                    <div className="w-[64px] h-[64px] rounded-[20px] overflow-hidden">
+                      {app.icon}
+                    </div>
+                  </div>
+                  <span className="text-xs text-white truncate w-[76px] text-center">{app.name}</span>
+                </div>
+              );
+            })}
+            <div className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center border-2 border-dashed border-white/40 transition-all duration-200 ${focusArea === 'grid' && selectedIndex === apps.filter(app => app.isPinned).length ? 'bg-white/40 scale-105' : 'bg-transparent'}`}>
+              <Plus className="w-8 h-8 text-white/60" />
             </div>
           </div>
         ) : activeTab === 0 ? (
@@ -175,7 +188,12 @@ const Dashboard = ({
                       <div className={`w-[60px] h-[60px] rounded-[18px] flex items-center justify-center overflow-hidden shrink-0 ${app.bg} shadow-md`}>
                         {app.icon}
                       </div>
-                      <span className="font-semibold text-lg tracking-wide">{app.name}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-lg tracking-wide">{app.name}</span>
+                        <span className="text-xs text-gray-400 truncate max-w-[200px]">
+                          {app.widgetInfo ? (app.widgetInfo.length > 20 ? app.widgetInfo.substring(0, 20) + '...' : app.widgetInfo) : ''}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -224,6 +242,11 @@ const Dashboard = ({
                   ByetUI 1.1
                 </h2>
                 <p className="text-xl text-gray-400">developed by foysal</p>
+              </div>
+            ) : showWidgetInfo ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                <h2 className="text-2xl font-bold mb-4">Widget Info</h2>
+                <p className="text-lg text-gray-300">{showWidgetInfo}</p>
               </div>
             ) : (
               menuItems.map((item, index) => (
@@ -292,11 +315,30 @@ export default function App() {
   const [selectedIndex, setSelectedIndex] = React.useState(-1);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showAbout, setShowAbout] = React.useState(false);
+  const [showWidgetInfo, setShowWidgetInfo] = React.useState<string | null>(null);
   const [menuSelectedIndex, setMenuSelectedIndex] = React.useState(0);
   const [focusArea, setFocusArea] = React.useState<'header' | 'grid'>('grid');
   const [activeTab, setActiveTab] = React.useState(1);
   const [activeCategory, setActiveCategory] = React.useState<'none' | 'New' | 'Popular'>('none');
-  const menuItems = ['About', 'Settings', 'Privacy'];
+  const getSelectedApp = () => {
+    if (activeTab === 2) {
+      const pinnedApps = apps.filter(app => app.isPinned);
+      return pinnedApps[selectedIndex];
+    }
+    if (activeTab === 0) {
+      if (activeCategory === 'New') return apps[newCategoryApps[selectedIndex]];
+      if (activeCategory === 'Popular') return apps[popularCategoryApps[selectedIndex]];
+      return null;
+    }
+    return apps[selectedIndex];
+  };
+
+  const selectedApp = getSelectedApp();
+  const isPinned = selectedApp?.isPinned;
+  
+  const menuItems = selectedIndex !== -1 
+    ? [isPinned ? 'Unpin' : 'Pin', 'Widget Info', 'System', 'Quick Start', 'About'] 
+    : ['About', 'Settings', 'Privacy'];
 
   React.useEffect(() => {
     const fetchApps = async () => {
@@ -314,6 +356,7 @@ export default function App() {
               id: app.id,
               name: app.name,
               url: app.url,
+              widgetInfo: app.widgetInfo,
               icon: <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />,
               bg: 'bg-white'
             };
@@ -369,6 +412,8 @@ export default function App() {
       window.location.hash = '';
     } else if (showAbout) {
       setShowAbout(false);
+    } else if (showWidgetInfo) {
+      setShowWidgetInfo(null);
     } else if (isMenuOpen) {
       setIsMenuOpen(false);
     } else if (activeTab === 0 && activeCategory !== 'none') {
@@ -385,6 +430,22 @@ export default function App() {
         setShowAbout(false);
       } else if (menuItems[menuSelectedIndex] === 'About') {
         setShowAbout(true);
+      } else if (menuItems[menuSelectedIndex] === 'Widget Info') {
+        const app = getSelectedApp();
+        setShowWidgetInfo(app?.widgetInfo || 'No widget info available.');
+        setIsMenuOpen(false);
+      } else if (menuItems[menuSelectedIndex] === 'Pin') {
+        // Pin logic
+        setApps(prevApps => prevApps.map((app) => 
+          app.id === selectedApp?.id ? { ...app, isPinned: true } : app
+        ));
+        setIsMenuOpen(false);
+      } else if (menuItems[menuSelectedIndex] === 'Unpin') {
+        // Unpin logic
+        setApps(prevApps => prevApps.map((app) => 
+          app.id === selectedApp?.id ? { ...app, isPinned: false } : app
+        ));
+        setIsMenuOpen(false);
       } else {
         setIsMenuOpen(false);
       }
@@ -397,8 +458,13 @@ export default function App() {
       }
     } else if (selectedIndex !== -1) {
       if (activeTab === 2) {
-        // Action for the + button in Pin view
-        console.log("Add pinned app clicked");
+        const pinnedApps = apps.filter(app => app.isPinned);
+        if (selectedIndex >= 0 && selectedIndex < pinnedApps.length) {
+          window.open(pinnedApps[selectedIndex].url, '_blank');
+        } else {
+          // Action for the + button in Pin view
+          console.log("Add pinned app clicked");
+        }
       } else if (activeTab === 0) {
         if (activeCategory === 'none') {
           if (selectedIndex === 0) {
@@ -473,12 +539,30 @@ export default function App() {
 
     // focusArea === 'grid'
     if (activeTab === 2) {
+      const pinnedApps = apps.filter(app => app.isPinned);
+      const maxIndex = pinnedApps.length; // + icon is at this index
+
       if (dir === 'up') {
-        setFocusArea('header');
-        setActiveTab(2);
+        if (selectedIndex >= 3) {
+          setSelectedIndex(prev => prev - 3);
+        } else {
+          setFocusArea('header');
+        }
+      } else if (dir === 'down') {
+        if (selectedIndex + 3 <= maxIndex) {
+          setSelectedIndex(prev => prev + 3);
+        }
       } else if (dir === 'left') {
-        setActiveTab(1);
-        setSelectedIndex(2);
+        if (selectedIndex % 3 !== 0) {
+          setSelectedIndex(prev => prev - 1);
+        } else {
+          setActiveTab(1);
+          setSelectedIndex(2);
+        }
+      } else if (dir === 'right') {
+        if (selectedIndex % 3 !== 2 && selectedIndex < maxIndex) {
+          setSelectedIndex(prev => prev + 1);
+        }
       }
       return;
     }
@@ -609,7 +693,8 @@ export default function App() {
               newCategoryApps={newCategoryApps}
               popularCategoryApps={popularCategoryApps}
               showAbout={showAbout}
-              menuItems={['About', 'Settings', 'Privacy']}
+              showWidgetInfo={showWidgetInfo}
+              menuItems={menuItems}
             />
           )}
         </div>
