@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { motion } from 'motion/react';
 import { 
   LayoutGrid, 
   Home, 
@@ -31,13 +32,17 @@ import Console from './components/Console';
 
 const Dashboard = ({ 
   selectedIndex, 
+  setSelectedIndex,
   isMenuOpen, 
   menuSelectedIndex,
   onToggleMenu,
+  onMenuSelect,
   onBack,
   focusArea,
   activeTab,
+  setActiveTab,
   activeCategory,
+  setActiveCategory,
   apps,
   newCategoryApps,
   popularCategoryApps,
@@ -46,13 +51,17 @@ const Dashboard = ({
   menuItems
 }: { 
   selectedIndex: number, 
+  setSelectedIndex: (index: number) => void,
   isMenuOpen: boolean, 
   menuSelectedIndex: number,
   onToggleMenu: () => void,
+  onMenuSelect: (index: number) => void,
   onBack: () => void,
   focusArea: 'header' | 'grid',
   activeTab: number,
-  activeCategory: 'none' | 'New' | 'Popular',
+  setActiveTab: (tab: number) => void,
+  activeCategory: 'none' | 'New' | 'Popular' | 'Game' | 'Social' | 'Studies' | 'Education' | string,
+  setActiveCategory: (category: string) => void,
   apps: any[],
   newCategoryApps: number[],
   popularCategoryApps: number[],
@@ -61,6 +70,34 @@ const Dashboard = ({
   menuItems: string[]
 }) => {
   const isSelected = selectedIndex !== -1;
+  
+  const handleDragEnd = (event: any, info: any) => {
+    const offsetX = info.offset.x;
+    const offsetY = info.offset.y;
+    
+    if (Math.abs(offsetX) > Math.abs(offsetY)) {
+      if (offsetX > 50) { // Swipe Right
+        if (activeTab > 0) setActiveTab(activeTab - 1);
+      } else if (offsetX < -50) { // Swipe Left
+        if (activeTab < 2) setActiveTab(activeTab + 1);
+      }
+    } else {
+      if (activeTab === 1) {
+        if (offsetY < -50) { // Swipe Up (Next Page)
+          const currentPage = Math.floor((selectedIndex === -1 ? 0 : selectedIndex) / 9);
+          const maxPage = Math.ceil(apps.length / 9) - 1;
+          if (currentPage < maxPage) {
+            setSelectedIndex((currentPage + 1) * 9);
+          }
+        } else if (offsetY > 50) { // Swipe Down (Prev Page)
+          const currentPage = Math.floor((selectedIndex === -1 ? 0 : selectedIndex) / 9);
+          if (currentPage > 0) {
+            setSelectedIndex((currentPage - 1) * 9);
+          }
+        }
+      }
+    }
+  };
 
   let displayName = '';
   if (isSelected && focusArea !== 'header') {
@@ -68,24 +105,33 @@ const Dashboard = ({
       if (activeCategory === 'none') {
         if (selectedIndex === 0) displayName = 'New Apps';
         else if (selectedIndex === 4) displayName = 'Popular Apps';
+        else if (selectedIndex === 8) displayName = 'Game Apps';
+        else if (selectedIndex === 9) displayName = 'Social Apps';
+        else if (selectedIndex === 10) displayName = 'Studies Apps';
+        else if (selectedIndex === 11) displayName = 'Education Apps';
         else if (selectedIndex >= 1 && selectedIndex <= 3) {
           displayName = apps[newCategoryApps[selectedIndex - 1]]?.name || '';
         } else if (selectedIndex >= 5 && selectedIndex <= 7) {
           displayName = apps[popularCategoryApps[selectedIndex - 5]]?.name || '';
         }
       } else {
-        const list = activeCategory === 'New' ? newCategoryApps : popularCategoryApps;
-        displayName = apps[list[selectedIndex]]?.name || '';
+        const categoryApps = apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase());
+        displayName = categoryApps[selectedIndex]?.name || '';
       }
     } else if (activeTab === 1) {
       displayName = apps[selectedIndex]?.name || '';
     } else if (activeTab === 2) {
-      displayName = 'Add App';
+      const pinnedApps = apps.filter(app => app.isPinned);
+      if (selectedIndex < pinnedApps.length) {
+        displayName = pinnedApps[selectedIndex]?.name || '';
+      } else {
+        displayName = 'Add App';
+      }
     }
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#1c1c1c] text-white overflow-hidden font-sans relative select-none">
+    <div className="flex flex-col h-screen bg-[#1c1c1c] text-white overflow-hidden font-sans relative select-none">
       {/* Header */}
       <header className="flex items-center justify-center gap-2 pt-4 pb-2 shrink-0">
         <div className={`${activeTab === 0 ? 'bg-[#1a73e8] shadow-lg' : 'bg-transparent'} rounded-full px-5 py-1.5 flex items-center justify-center transition-colors`}>
@@ -109,14 +155,21 @@ const Dashboard = ({
       </header>
 
       {/* Main Content / App Grid */}
-      <main className="flex-1 min-h-0 relative px-2 py-1 flex flex-col justify-center overflow-hidden">
+      <motion.div 
+        className="flex-1 min-h-0 relative px-2 py-1 flex flex-col justify-center overflow-hidden"
+        drag
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        style={{ touchAction: 'none' }}
+      >
         {activeTab === 2 ? (
-          <div className="flex-1 overflow-y-auto p-2 grid grid-cols-3 gap-2 content-start">
+          <div className="flex-1 overflow-y-auto p-2 grid grid-cols-3 gap-2 content-start touch-pan-y">
             {apps.filter(app => app.isPinned).map((app, index) => {
               const isFocused = focusArea === 'grid' && selectedIndex === index;
               return (
-                <div key={app.id} className="flex flex-col items-center gap-1">
-                  <div className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-white/10'}`}>
+                <div key={`${app.id}-${index}`} className="flex flex-col items-center gap-1" onClick={() => window.open(app.url, '_blank')} onPointerEnter={() => setSelectedIndex(index)}>
+                  <div className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-white/10 hover:bg-white/20'}`}>
                     <div className="w-[64px] h-[64px] rounded-[20px] overflow-hidden">
                       {app.icon}
                     </div>
@@ -130,86 +183,130 @@ const Dashboard = ({
             </div>
           </div>
         ) : activeTab === 0 ? (
-          activeCategory === 'none' ? (
-            <div className="flex flex-col gap-2 h-full px-1 py-2 overflow-y-auto no-scrollbar">
-              {/* New Section */}
-              <div className="flex flex-col gap-1">
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors ${focusArea === 'grid' && selectedIndex === 0 ? 'bg-[#1a73e8] text-white' : 'text-white'}`}>
-                  <span className="font-bold text-lg leading-none">New</span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-2 justify-items-center">
-                  {newCategoryApps.slice(0, 3).map((appIdx, i) => {
-                    const app = apps[appIdx];
-                    const isFocused = focusArea === 'grid' && selectedIndex === i + 1;
-                    return (
-                      <div key={app.id} className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center relative transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-transparent'}`}>
-                        <div className={`w-[64px] h-[64px] rounded-[20px] flex items-center justify-center overflow-hidden ${app.bg} shadow-md`}>
-                          {app.icon}
+          <div className="flex flex-col gap-2 h-full px-1 py-2 overflow-y-auto no-scrollbar touch-pan-y">
+            {activeCategory === 'none' ? (
+              <>
+                {/* New Section */}
+                <div className="flex flex-col gap-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 0 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('New'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">New</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-2 justify-items-center">
+                    {newCategoryApps.slice(0, 3).map((appIdx, i) => {
+                      const app = apps[appIdx];
+                      const isFocused = focusArea === 'grid' && selectedIndex === i + 1;
+                      return (
+                        <div key={`${app.id}-${i}`} className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center relative transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-transparent hover:bg-white/10'}`} onClick={() => window.open(app.url, '_blank')} onPointerEnter={() => setSelectedIndex(i + 1)}>
+                          <div className={`w-[64px] h-[64px] rounded-[20px] flex items-center justify-center overflow-hidden ${app.bg} shadow-md`}>
+                            {app.icon}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Popular Section */}
-              <div className="flex flex-col gap-1 mt-1">
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors ${focusArea === 'grid' && selectedIndex === 4 ? 'bg-[#1a73e8] text-white' : 'text-white'}`}>
-                  <span className="font-bold text-lg leading-none">Popular</span>
-                  <ChevronRight className="w-4 h-4" />
-                </div>
-                <div className="grid grid-cols-3 gap-x-2 gap-y-2 justify-items-center">
-                  {popularCategoryApps.slice(0, 3).map((appIdx, i) => {
-                    const app = apps[appIdx];
-                    const isFocused = focusArea === 'grid' && selectedIndex === i + 5;
-                    return (
-                      <div key={app.id} className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center relative transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-transparent'}`}>
-                        <div className={`w-[64px] h-[64px] rounded-[20px] flex items-center justify-center overflow-hidden ${app.bg} shadow-md`}>
-                          {app.icon}
+                {/* Popular Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 4 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Popular'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Popular</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-x-2 gap-y-2 justify-items-center">
+                    {popularCategoryApps.slice(0, 3).map((appIdx, i) => {
+                      const app = apps[appIdx];
+                      const isFocused = focusArea === 'grid' && selectedIndex === i + 5;
+                      return (
+                        <div key={`${app.id}-${i}`} className={`w-[76px] h-[76px] rounded-[24px] flex items-center justify-center relative transition-all duration-200 ${isFocused ? 'bg-white/40 scale-105' : 'bg-transparent hover:bg-white/10'}`} onClick={() => window.open(app.url, '_blank')} onPointerEnter={() => setSelectedIndex(i + 5)}>
+                          <div className={`w-[64px] h-[64px] rounded-[20px] flex items-center justify-center overflow-hidden ${app.bg} shadow-md`}>
+                            {app.icon}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Game Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 8 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Game'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Game</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Social Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 9 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Social'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Social</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Studies Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 10 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Studies'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Studies</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Education Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 11 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Education'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Education</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-2 px-4 py-2 mb-2">
+                  <button onClick={onBack} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                    <ArrowLeft className="w-5 h-5 text-white" />
+                  </button>
+                  <span className="font-bold text-xl text-white">{activeCategory} Apps</span>
+                </div>
+                <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar pb-4 w-full">
+                  {apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase()).length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-gray-400 mt-10">
+                      No apps found in this category.
+                    </div>
+                  ) : (
+                    apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase()).map((app, index) => {
+                      const isFocused = focusArea === 'grid' && selectedIndex === index;
+                      return (
+                        <div key={`${app.id}-${index}`} className={`flex items-center gap-4 px-4 py-3 transition-all duration-200 ${isFocused ? 'bg-[#1a73e8] text-white' : 'bg-transparent text-gray-200 hover:bg-white/10'}`} onClick={() => window.open(app.url, '_blank')} onPointerEnter={() => setSelectedIndex(index)}>
+                          <div className={`w-[60px] h-[60px] rounded-[18px] flex items-center justify-center overflow-hidden shrink-0 ${app.bg} shadow-md`}>
+                            {app.icon}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-lg tracking-wide">{app.name}</span>
+                            <span className="text-xs text-gray-400 truncate max-w-[200px]">
+                              {app.widgetInfo ? (app.widgetInfo.length > 20 ? app.widgetInfo.substring(0, 20) + '...' : app.widgetInfo) : ''}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col h-full">
-              <div className="flex items-center gap-2 px-2 py-2 mb-2">
-                <span className="font-bold text-xl text-white">{activeCategory} Apps</span>
-              </div>
-              <div className="flex flex-col gap-2 overflow-y-auto no-scrollbar pb-4 px-2">
-                {(activeCategory === 'New' ? newCategoryApps : popularCategoryApps).map((appIdx, index) => {
-                  const app = apps[appIdx];
-                  const isFocused = focusArea === 'grid' && selectedIndex === index;
-                  return (
-                    <div key={app.id} className={`flex items-center gap-4 p-2 rounded-2xl transition-all duration-200 ${isFocused ? 'bg-[#1a73e8] text-white scale-[1.02] shadow-lg' : 'bg-[#2a2a2a] text-gray-200'}`}>
-                      <div className={`w-[60px] h-[60px] rounded-[18px] flex items-center justify-center overflow-hidden shrink-0 ${app.bg} shadow-md`}>
-                        {app.icon}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-lg tracking-wide">{app.name}</span>
-                        <span className="text-xs text-gray-400 truncate max-w-[200px]">
-                          {app.widgetInfo ? (app.widgetInfo.length > 20 ? app.widgetInfo.substring(0, 20) + '...' : app.widgetInfo) : ''}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-3 gap-x-2 gap-y-2 h-full content-start pt-2 justify-items-center">
             {apps.slice(Math.floor((selectedIndex === -1 ? 0 : selectedIndex) / 9) * 9, (Math.floor((selectedIndex === -1 ? 0 : selectedIndex) / 9) + 1) * 9).map((app, index) => {
               const actualIndex = Math.floor((selectedIndex === -1 ? 0 : selectedIndex) / 9) * 9 + index;
               return (
                 <div
-                  key={app.id}
+                  key={`${app.id}-${actualIndex}`}
                   className={`w-[84px] h-[84px] rounded-[28px] flex items-center justify-center relative transition-all duration-200 ${
-                    focusArea === 'grid' && selectedIndex === actualIndex ? 'bg-white/40 scale-105' : 'bg-transparent'
+                    focusArea === 'grid' && selectedIndex === actualIndex ? 'bg-white/40 scale-105' : 'bg-transparent hover:bg-white/10'
                   }`}
+                  onClick={() => window.open(app.url, '_blank')}
+                  onPointerEnter={() => setSelectedIndex(actualIndex)}
                 >
                   <div className={`w-[72px] h-[72px] rounded-[22px] flex items-center justify-center overflow-hidden ${app.bg} shadow-md`}>
                     {app.icon}
@@ -231,9 +328,7 @@ const Dashboard = ({
 
         {/* Menu Overlay */}
         {isMenuOpen && (
-          <motion.div 
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
+          <div 
             className="absolute inset-0 bg-black z-50 flex flex-col"
           >
             {showAbout ? (
@@ -251,7 +346,8 @@ const Dashboard = ({
             ) : (
               menuItems.map((item, index) => (
                 <div 
-                  key={item}
+                  key={`${item}-${index}`}
+                  onClick={() => onMenuSelect(index)}
                   className={`px-4 py-3 text-2xl font-bold transition-colors ${
                     menuSelectedIndex === index ? 'bg-[#1a73e8] text-white' : 'text-white'
                   }`}
@@ -260,16 +356,18 @@ const Dashboard = ({
                 </div>
               ))
             )}
-          </motion.div>
+          </div>
         )}
-      </main>
+      </motion.div>
 
       {/* Footer */}
       <footer className="bg-black px-3 py-1.5 flex items-center justify-between shrink-0 h-12">
-        <button onClick={onToggleMenu} className="hover:bg-white/10 p-1 rounded-lg transition-colors flex flex-col gap-[5px] items-center justify-center w-11">
-          <div className="h-[3px] w-[30px] bg-white" />
-          <div className="h-[3px] w-[30px] bg-white" />
-          <div className="h-[3px] w-[30px] bg-white" />
+        <button onClick={onToggleMenu} className="hover:bg-white/10 p-1 rounded-lg transition-colors flex flex-col items-center justify-center w-16">
+          <div className="flex flex-col gap-[3px] items-center justify-center">
+            <div className="h-[2px] w-[20px] bg-white" />
+            <div className="h-[2px] w-[20px] bg-white" />
+            <div className="h-[2px] w-[20px] bg-white" />
+          </div>
         </button>
         <div className="flex items-center justify-center flex-1">
           {displayName === '' ? (
@@ -280,8 +378,8 @@ const Dashboard = ({
             </h1>
           )}
         </div>
-        <button onClick={onBack} className="hover:bg-white/10 p-1 rounded-lg transition-colors flex items-center justify-center w-11">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <button onClick={onBack} className="hover:bg-white/10 p-1 rounded-lg transition-colors flex flex-col items-center justify-center w-16">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 12H3" />
             <path d="M10 19l-7-7 7-7" />
           </svg>
@@ -319,15 +417,17 @@ export default function App() {
   const [menuSelectedIndex, setMenuSelectedIndex] = React.useState(0);
   const [focusArea, setFocusArea] = React.useState<'header' | 'grid'>('grid');
   const [activeTab, setActiveTab] = React.useState(1);
-  const [activeCategory, setActiveCategory] = React.useState<'none' | 'New' | 'Popular'>('none');
+  const [activeCategory, setActiveCategory] = React.useState<string>('none');
   const getSelectedApp = () => {
     if (activeTab === 2) {
       const pinnedApps = apps.filter(app => app.isPinned);
       return pinnedApps[selectedIndex];
     }
     if (activeTab === 0) {
-      if (activeCategory === 'New') return apps[newCategoryApps[selectedIndex]];
-      if (activeCategory === 'Popular') return apps[popularCategoryApps[selectedIndex]];
+      if (activeCategory !== 'none') {
+        const categoryApps = apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase());
+        return categoryApps[selectedIndex];
+      }
       return null;
     }
     return apps[selectedIndex];
@@ -358,12 +458,13 @@ export default function App() {
               url: app.url,
               widgetInfo: app.widgetInfo,
               icon: <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />,
-              bg: 'bg-white'
+              bg: 'bg-white',
+              isPinned: app.isPinned ?? true
             };
             const newAppIndex = currentApps.length;
             currentApps.push(newApp);
             currentNew.push(newAppIndex);
-            if (app.location === 'Popular') {
+            if ((app.location || '').toLowerCase() === 'popular') {
               currentPopular.push(newAppIndex);
             }
           });
@@ -380,31 +481,46 @@ export default function App() {
   }, []);
 
   React.useEffect(() => {
-    // Always start at Home and clear hash on reload
-    setActiveTab(1);
-    setSelectedIndex(-1);
-    if (window.location.hash) {
-      window.location.hash = '';
-    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isMenuOpen) {
+        if (e.key === 'ArrowUp') handleNav('up');
+        else if (e.key === 'ArrowDown') handleNav('down');
+        else if (e.key === 'Enter' || e.key === '0') handleOk();
+        else if (e.key === 'Backspace') handleBack();
+        return;
+      }
 
-    const handleHashChange = () => {
-      if (window.location.hash === '#/console') {
-        setIsConsoleOpen(true);
-      } else {
-        setIsConsoleOpen(false);
+      switch (e.key) {
+        case 'ArrowUp': handleNav('up'); break;
+        case 'ArrowDown': handleNav('down'); break;
+        case 'ArrowLeft': handleNav('left'); break;
+        case 'ArrowRight': handleNav('right'); break;
+        case 'Enter': handleOk(); break;
+        case 'Backspace': handleBack(); break;
+        case 'F1': toggleMenu(); break;
+        case 'F2': handleBack(); break;
+        case 'h': handleHome(); break;
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+        case '*': case '#':
+          // Keypad logic can be added here if needed
+          console.log(`Key pressed: ${e.key}`);
+          break;
       }
     };
 
-    // Check on initial load
-    handleHashChange();
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMenuOpen, focusArea, activeTab, activeCategory, selectedIndex, menuSelectedIndex, apps]);
 
   const toggleMenu = () => {
     setIsMenuOpen(prev => !prev);
     setMenuSelectedIndex(0);
+  };
+
+  const handleMenuSelect = (index: number) => {
+    setMenuSelectedIndex(index);
+    handleOk();
   };
 
   const handleBack = () => {
@@ -417,8 +533,16 @@ export default function App() {
     } else if (isMenuOpen) {
       setIsMenuOpen(false);
     } else if (activeTab === 0 && activeCategory !== 'none') {
+      const categoryIndexMap: Record<string, number> = {
+        'New': 0,
+        'Popular': 4,
+        'Game': 8,
+        'Social': 9,
+        'Studies': 10,
+        'Education': 11
+      };
+      setSelectedIndex(categoryIndexMap[activeCategory] ?? 0);
       setActiveCategory('none');
-      setSelectedIndex(activeCategory === 'New' ? 0 : 4);
     } else if (selectedIndex !== -1) {
       setSelectedIndex(-1);
     }
@@ -473,13 +597,27 @@ export default function App() {
           } else if (selectedIndex === 4) {
             setActiveCategory('Popular');
             setSelectedIndex(0);
+          } else if (selectedIndex === 8) {
+            setActiveCategory('Game');
+            setSelectedIndex(0);
+          } else if (selectedIndex === 9) {
+            setActiveCategory('Social');
+            setSelectedIndex(0);
+          } else if (selectedIndex === 10) {
+            setActiveCategory('Studies');
+            setSelectedIndex(0);
+          } else if (selectedIndex === 11) {
+            setActiveCategory('Education');
+            setSelectedIndex(0);
           } else {
-            const appIndex = selectedIndex >= 5 ? popularCategoryApps[selectedIndex - 5] : newCategoryApps[selectedIndex - 1];
-            if (apps[appIndex]) window.open(apps[appIndex].url, '_blank');
+            const newApps = apps.filter(app => (app.location || '').toLowerCase() === 'new');
+            const popularApps = apps.filter(app => (app.location || '').toLowerCase() === 'popular');
+            const app = selectedIndex >= 5 ? popularApps[selectedIndex - 5] : newApps[selectedIndex - 1];
+            if (app) window.open(app.url, '_blank');
           }
         } else {
-          const list = activeCategory === 'New' ? newCategoryApps : popularCategoryApps;
-          if (apps[list[selectedIndex]]) window.open(apps[list[selectedIndex]].url, '_blank');
+          const categoryApps = apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase());
+          if (categoryApps[selectedIndex]) window.open(categoryApps[selectedIndex].url, '_blank');
         }
       } else {
         if (apps[selectedIndex]) window.open(apps[selectedIndex].url, '_blank');
@@ -556,12 +694,15 @@ export default function App() {
         if (selectedIndex % 3 !== 0) {
           setSelectedIndex(prev => prev - 1);
         } else {
-          setActiveTab(1);
+          setActiveTab(prev => Math.max(0, prev - 1));
           setSelectedIndex(2);
         }
       } else if (dir === 'right') {
         if (selectedIndex % 3 !== 2 && selectedIndex < maxIndex) {
           setSelectedIndex(prev => prev + 1);
+        } else {
+          setActiveTab(prev => Math.min(2, prev + 1));
+          setSelectedIndex(0);
         }
       }
       return;
@@ -569,7 +710,8 @@ export default function App() {
 
     if (activeTab === 0) {
       if (activeCategory !== 'none') {
-        const maxIndex = 5;
+        const categoryApps = apps.filter(app => (app.location || '').toLowerCase() === (activeCategory || '').toLowerCase());
+        const maxIndex = Math.max(0, categoryApps.length - 1);
         if (dir === 'up') {
           if (selectedIndex === 0) {
             setFocusArea('header');
@@ -579,8 +721,19 @@ export default function App() {
         } else if (dir === 'down') {
           setSelectedIndex(prev => Math.min(maxIndex, prev + 1));
         } else if (dir === 'left') {
+          const categoryIndexMap: Record<string, number> = {
+            'New': 0,
+            'Popular': 4,
+            'Game': 8,
+            'Social': 9,
+            'Studies': 10,
+            'Education': 11
+          };
+          setSelectedIndex(categoryIndexMap[activeCategory] ?? 0);
           setActiveCategory('none');
-          setSelectedIndex(activeCategory === 'New' ? 0 : 4);
+        } else if (dir === 'right') {
+          setActiveTab(1);
+          setSelectedIndex(0);
         }
         return;
       }
@@ -596,13 +749,19 @@ export default function App() {
           setSelectedIndex(1);
         } else if (selectedIndex >= 5 && selectedIndex <= 7) {
           setSelectedIndex(4);
+        } else if (selectedIndex === 8) {
+          setSelectedIndex(5); // Go to first app in Popular, or 4 if none
+        } else if (selectedIndex >= 9 && selectedIndex <= 11) {
+          setSelectedIndex(prev => prev - 1);
         }
       } else if (dir === 'down') {
         if (selectedIndex === 0) setSelectedIndex(1);
         else if (selectedIndex >= 1 && selectedIndex <= 3) setSelectedIndex(4);
         else if (selectedIndex === 4) setSelectedIndex(5);
+        else if (selectedIndex >= 5 && selectedIndex <= 7) setSelectedIndex(8);
+        else if (selectedIndex >= 8 && selectedIndex <= 10) setSelectedIndex(prev => prev + 1);
       } else if (dir === 'left') {
-        if (selectedIndex === 0 || selectedIndex === 4) {
+        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 11)) {
           // Do nothing
         } else if (selectedIndex === 1 || selectedIndex === 5) {
           setFocusArea('header');
@@ -610,7 +769,7 @@ export default function App() {
           setSelectedIndex(prev => prev - 1);
         }
       } else if (dir === 'right') {
-        if (selectedIndex === 0 || selectedIndex === 4) {
+        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 11)) {
           setActiveTab(1);
           setSelectedIndex(0);
         } else if (selectedIndex === 1 || selectedIndex === 2 || selectedIndex === 5 || selectedIndex === 6) {
@@ -659,152 +818,42 @@ export default function App() {
     });
   };
 
+
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-      {/* Phone Body - Even longer as per the image */}
-      <div className="w-[380px] h-[940px] bg-[#1a1a1a] rounded-[60px] border-[8px] border-[#2a2a2a] shadow-[0_0_60px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden relative p-5 outline outline-1 outline-white/5">
-        
-        {/* Speaker Grill */}
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 w-24 h-2 bg-[#0a0a0a] rounded-full shadow-inner border-t border-white/5" />
-
-        {/* Screen Area - Very tall for the elongated body */}
-        <div className="mt-12 w-full aspect-[1/1.6] bg-black rounded-xl overflow-hidden border-[4px] border-[#222] shadow-[inset_0_0_30px_rgba(0,0,0,1)] relative">
-          {isConsoleOpen ? (
-            <Console 
-              apps={apps}
-              setApps={setApps}
-              newCategoryApps={newCategoryApps}
-              setNewCategoryApps={setNewCategoryApps}
-              popularCategoryApps={popularCategoryApps}
-              setPopularCategoryApps={setPopularCategoryApps}
-              onClose={() => { window.location.hash = ''; }}
-            />
-          ) : (
-            <Dashboard 
-              selectedIndex={selectedIndex} 
-              isMenuOpen={isMenuOpen}
-              menuSelectedIndex={menuSelectedIndex}
-              onToggleMenu={toggleMenu}
-              onBack={handleBack}
-              focusArea={focusArea}
-              activeTab={activeTab}
-              activeCategory={activeCategory}
-              apps={apps}
-              newCategoryApps={newCategoryApps}
-              popularCategoryApps={popularCategoryApps}
-              showAbout={showAbout}
-              showWidgetInfo={showWidgetInfo}
-              menuItems={menuItems}
-            />
-          )}
-        </div>
-
-        {/* Navigation Buttons Area */}
-        <div className="mt-8 px-1 grid grid-cols-3 gap-x-2 gap-y-4">
-          {/* Soft Keys */}
-          <button 
-            onClick={toggleMenu}
-            className="h-14 bg-[#262626] hover:bg-[#333] active:bg-[#444] rounded-t-2xl flex items-center justify-center border-b-2 border-black/60 transition-colors"
-          >
-            <div className="w-12 h-[5px] bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
-          </button>
-          
-          {/* D-Pad Frame */}
-          <div className="row-span-2 flex items-center justify-center">
-            <div className="w-28 h-28 bg-[#262626] rounded-[35px] border-2 border-[#333] flex items-center justify-center shadow-2xl relative">
-              <button 
-                onClick={handleOk}
-                className="w-16 h-14 bg-[#1a1a1a] hover:bg-[#222] active:bg-[#000] rounded-xl border border-[#000] shadow-inner flex items-center justify-center transition-colors z-10"
-              >
-                <span className="text-[10px] font-bold text-white/40 tracking-widest">OK</span>
-              </button>
-              {/* D-Pad Directions */}
-              <button onClick={() => handleNav('up')} className="absolute top-1 w-12 h-8 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all group">
-                <div className="w-8 h-3 bg-white/30 group-hover:bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" />
-              </button>
-              <button onClick={() => handleNav('down')} className="absolute bottom-1 w-12 h-8 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all group">
-                <div className="w-8 h-3 bg-white/30 group-hover:bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" />
-              </button>
-              <button onClick={() => handleNav('left')} className="absolute left-1 w-8 h-12 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all group">
-                <div className="w-3 h-8 bg-white/30 group-hover:bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" />
-              </button>
-              <button onClick={() => handleNav('right')} className="absolute right-1 w-8 h-12 flex items-center justify-center hover:bg-white/10 active:bg-white/20 rounded-full transition-all group">
-                <div className="w-3 h-8 bg-white/30 group-hover:bg-white/50 rounded-full shadow-[0_0_5px_rgba(255,255,255,0.2)]" />
-              </button>
-            </div>
-          </div>
-
-          <button 
-            onClick={handleBack}
-            className="h-14 bg-[#262626] hover:bg-[#333] active:bg-[#444] rounded-t-2xl flex items-center justify-center border-b-2 border-black/60 transition-colors"
-          >
-            <div className="w-12 h-[5px] bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
-          </button>
-
-          {/* Call / End Call */}
-          <button className="h-16 bg-[#262626] rounded-b-2xl flex items-center justify-center border-t border-white/5">
-            <div className="w-12 h-6 border-[4px] border-green-500 rounded-full border-b-0 rotate-180" />
-          </button>
-
-          <button 
-            onClick={handleHome}
-            className="h-16 bg-[#262626] hover:bg-[#333] active:bg-[#444] rounded-b-2xl flex items-center justify-center border-t border-white/5 transition-colors"
-          >
-            <div className="relative w-12 h-12 flex items-center justify-center">
-              <div className="w-11 h-6 border-[4px] border-red-500 rounded-full border-b-0 rotate-180" />
-              <div className="absolute w-1.5 h-5 bg-red-500 top-2" />
-            </div>
-          </button>
-        </div>
-
-        {/* Numeric Keypad */}
-        <div className="mt-6 grid grid-cols-3 gap-2 px-1 flex-1 pb-8">
-          <KeypadButton 
-            icon={<div className="flex items-center gap-[1px]"><div className="w-3 h-3 border border-gray-400 rounded-full flex items-center justify-center"><div className="w-1 h-1 bg-gray-400 rounded-full" /></div><div className="w-2.5 h-[1px] bg-gray-400" /><div className="w-3 h-3 border border-gray-400 rounded-full flex items-center justify-center"><div className="w-1 h-1 bg-gray-400 rounded-full" /></div></div>}
-          >1</KeypadButton>
-          <KeypadButton subText="abc">2</KeypadButton>
-          <KeypadButton subText="def">3</KeypadButton>
-          
-          <KeypadButton subText="ghi">4</KeypadButton>
-          <KeypadButton subText="jkl">5</KeypadButton>
-          <KeypadButton subText="mno">6</KeypadButton>
-          
-          <KeypadButton subText="pqrs">7</KeypadButton>
-          <KeypadButton subText="tuv">8</KeypadButton>
-          <KeypadButton subText="wxyz">9</KeypadButton>
-          
-          <KeypadButton 
-            icon={
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg text-gray-400">*</span>
-                <div className="w-5 h-3 bg-gray-500 rounded-[1px] relative flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full" />
-                </div>
-                <span className="text-base text-gray-400">+</span>
-              </div>
-            }
-          >*</KeypadButton>
-          <KeypadButton icon={<div className="w-6 h-3 border-b-2 border-x-2 border-gray-400 rounded-b-sm flex items-center justify-center"><div className="w-3 h-[1px] bg-gray-400" /></div>}>0</KeypadButton>
-          <KeypadButton 
-            icon={
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg text-gray-400">#</span>
-                <div className="flex flex-col gap-[2px] items-center">
-                  <div className="w-2.5 h-2 border-l-2 border-t-2 border-gray-400 rotate-45 translate-y-0.5" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                </div>
-              </div>
-            }
-            onPointerDown={handleHashPointerDown}
-            onPointerUp={handleHashPointerUpOrLeave}
-            onPointerLeave={handleHashPointerUpOrLeave}
-          >#</KeypadButton>
-        </div>
-
-        {/* Bottom Mic Hole */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-6 h-2.5 bg-[#0a0a0a] rounded-full shadow-inner border-t border-white/5 flex items-center justify-center">
-          <div className="w-3 h-1 bg-[#222] rounded-full" />
-        </div>
+    <div className="min-h-screen bg-black flex flex-col w-full h-full">
+      <div className="flex-1 relative overflow-hidden">
+        {isConsoleOpen ? (
+          <Console 
+            apps={apps}
+            setApps={setApps}
+            newCategoryApps={newCategoryApps}
+            setNewCategoryApps={setNewCategoryApps}
+            popularCategoryApps={popularCategoryApps}
+            setPopularCategoryApps={setPopularCategoryApps}
+            onClose={() => { window.location.hash = ''; }}
+          />
+        ) : (
+          <Dashboard 
+            selectedIndex={selectedIndex} 
+            setSelectedIndex={setSelectedIndex}
+            isMenuOpen={isMenuOpen}
+            menuSelectedIndex={menuSelectedIndex}
+            onToggleMenu={toggleMenu}
+            onMenuSelect={handleMenuSelect}
+            onBack={handleBack}
+            focusArea={focusArea}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            apps={apps}
+            newCategoryApps={newCategoryApps}
+            popularCategoryApps={popularCategoryApps}
+            showAbout={showAbout}
+            showWidgetInfo={showWidgetInfo}
+            menuItems={menuItems}
+          />
+        )}
       </div>
     </div>
   );

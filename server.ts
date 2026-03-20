@@ -22,13 +22,68 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
 
   // API routes FIRST
+  app.use("/apps", express.static(path.join(process.cwd(), "apps")));
+  
   app.get("/api/apps", async (req, res) => {
     try {
-      const data = await fs.readFile(APPS_FILE, "utf-8");
-      res.json(JSON.parse(data));
+      const appsDir = path.join(process.cwd(), "apps");
+      const subdirs = await fs.readdir(appsDir, { withFileTypes: true });
+      const apps = [];
+
+      for (const dirent of subdirs) {
+        if (dirent.isDirectory()) {
+          const appName = dirent.name;
+          const appPath = path.join(appsDir, appName);
+          
+          try {
+            const url = (await fs.readFile(path.join(appPath, "app.url"), "utf-8")).trim();
+            
+            let location = "New";
+            try {
+              location = (await fs.readFile(path.join(appPath, "Location.txt"), "utf-8")).trim();
+            } catch {}
+            
+            let widgetInfo = "";
+            try {
+              widgetInfo = (await fs.readFile(path.join(appPath, "widget.info"), "utf-8")).trim();
+            } catch {}
+            
+            let isPinned = true;
+            try {
+              const pinnedContent = await fs.readFile(path.join(appPath, "isPinned.txt"), "utf-8");
+              isPinned = pinnedContent.trim().toLowerCase() === 'true';
+            } catch {}
+            
+            // Check for icon
+            let iconSrc = `https://picsum.photos/seed/${appName}/64/64`;
+            try {
+              await fs.access(path.join(appPath, "icon.png"));
+              iconSrc = `/apps/${encodeURIComponent(appName)}/icon.png`;
+            } catch {
+              try {
+                await fs.access(path.join(appPath, "icon.jpg"));
+                iconSrc = `/apps/${encodeURIComponent(appName)}/icon.jpg`;
+              } catch {}
+            }
+
+            apps.push({
+              id: appName,
+              name: appName,
+              url: url.trim(),
+              location: location.trim(),
+              widgetInfo: widgetInfo.trim(),
+              iconSrc,
+              isPinned
+            });
+          } catch (e) {
+            console.error(`Error reading app ${appName}:`, e);
+          }
+        }
+      }
+      res.json(apps);
     } catch (error) {
-      console.error("Error reading apps:", error);
-      res.status(500).json({ error: "Failed to read apps" });
+      console.error("Error scanning apps:", error);
+      res.status(500).json({ error: "Failed to scan apps" });
     }
   });
 
