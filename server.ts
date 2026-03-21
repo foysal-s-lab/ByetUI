@@ -57,14 +57,24 @@ async function startServer() {
             // Check for icon
             let iconSrc = `https://picsum.photos/seed/${appName}/64/64`;
             try {
-              await fs.access(path.join(appPath, "icon.png"));
-              iconSrc = `/apps/${encodeURIComponent(appName)}/icon.png`;
+              iconSrc = (await fs.readFile(path.join(appPath, "icon.url"), "utf-8")).trim();
             } catch {
               try {
-                await fs.access(path.join(appPath, "icon.jpg"));
-                iconSrc = `/apps/${encodeURIComponent(appName)}/icon.jpg`;
-              } catch {}
+                await fs.access(path.join(appPath, "icon.png"));
+                iconSrc = `/apps/${encodeURIComponent(appName)}/icon.png`;
+              } catch {
+                try {
+                  await fs.access(path.join(appPath, "icon.jpg"));
+                  iconSrc = `/apps/${encodeURIComponent(appName)}/icon.jpg`;
+                } catch {}
+              }
             }
+
+            let order = 999;
+            try {
+              const orderContent = await fs.readFile(path.join(appPath, "order.txt"), "utf-8");
+              order = parseInt(orderContent.trim(), 10);
+            } catch {}
 
             apps.push({
               id: appName,
@@ -73,13 +83,17 @@ async function startServer() {
               location: location.trim(),
               widgetInfo: widgetInfo.trim(),
               iconSrc,
-              isPinned
+              isPinned,
+              order
             });
           } catch (e) {
             console.error(`Error reading app ${appName}:`, e);
           }
         }
       }
+      
+      apps.sort((a, b) => a.order - b.order);
+      
       res.json(apps);
     } catch (error) {
       console.error("Error scanning apps:", error);

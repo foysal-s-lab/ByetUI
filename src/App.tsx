@@ -105,10 +105,12 @@ const Dashboard = ({
       if (activeCategory === 'none') {
         if (selectedIndex === 0) displayName = 'New Apps';
         else if (selectedIndex === 4) displayName = 'Popular Apps';
-        else if (selectedIndex === 8) displayName = 'Game Apps';
-        else if (selectedIndex === 9) displayName = 'Social Apps';
-        else if (selectedIndex === 10) displayName = 'Studies Apps';
-        else if (selectedIndex === 11) displayName = 'Education Apps';
+        else if (selectedIndex === 8) displayName = 'Social Apps';
+        else if (selectedIndex === 9) displayName = 'News Apps';
+        else if (selectedIndex === 10) displayName = 'Media Apps';
+        else if (selectedIndex === 11) displayName = 'Tools Apps';
+        else if (selectedIndex === 12) displayName = 'Game Apps';
+        else if (selectedIndex === 13) displayName = 'All Apps';
         else if (selectedIndex >= 1 && selectedIndex <= 3) {
           displayName = apps[newCategoryApps[selectedIndex - 1]]?.name || '';
         } else if (selectedIndex >= 5 && selectedIndex <= 7) {
@@ -133,7 +135,7 @@ const Dashboard = ({
   return (
     <div className="flex flex-col h-screen bg-[#1c1c1c] text-white overflow-hidden font-sans relative select-none">
       {/* Header */}
-      <header className="flex items-center justify-center gap-2 pt-4 pb-2 shrink-0">
+      <header className="flex items-center justify-center gap-2 pt-1 pb-2 shrink-0">
         <div className={`${activeTab === 0 ? 'bg-[#1a73e8] shadow-lg' : 'bg-transparent'} rounded-full px-5 py-1.5 flex items-center justify-center transition-colors`}>
           <div className="grid grid-cols-2 gap-[2px] w-[20px] h-[20px]">
             <div className="bg-white" />
@@ -228,34 +230,50 @@ const Dashboard = ({
                   </div>
                 </div>
 
-                {/* Game Section */}
-                <div className="flex flex-col gap-1 mt-1">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 8 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Game'); setSelectedIndex(0); }}>
-                    <span className="font-bold text-lg leading-none">Game</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                </div>
-
                 {/* Social Section */}
                 <div className="flex flex-col gap-1 mt-1">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 9 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Social'); setSelectedIndex(0); }}>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 8 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Social'); setSelectedIndex(0); }}>
                     <span className="font-bold text-lg leading-none">Social</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
 
-                {/* Studies Section */}
+                {/* News Section */}
                 <div className="flex flex-col gap-1 mt-1">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 10 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Studies'); setSelectedIndex(0); }}>
-                    <span className="font-bold text-lg leading-none">Studies</span>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 9 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('News'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">News</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
 
-                {/* Education Section */}
+                {/* Media Section */}
                 <div className="flex flex-col gap-1 mt-1">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 11 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Education'); setSelectedIndex(0); }}>
-                    <span className="font-bold text-lg leading-none">Education</span>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 10 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Media'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Media</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Tools Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 11 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Tools'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Tools</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Game Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 12 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('Game'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">Game</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* All Section */}
+                <div className="flex flex-col gap-1 mt-1">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-lg w-fit transition-colors cursor-pointer hover:bg-white/10 ${focusArea === 'grid' && selectedIndex === 13 ? 'bg-[#1a73e8] text-white' : 'text-white'}`} onClick={() => { setActiveCategory('All'); setSelectedIndex(0); }}>
+                    <span className="font-bold text-lg leading-none">All</span>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
@@ -452,13 +470,22 @@ export default function App() {
           let currentPopular: number[] = [];
 
           customApps.forEach((app: any) => {
+            let bg = 'bg-white';
+            if (app.name === 'BBC News') bg = 'bg-black';
+            else if (app.name === 'Weather') bg = 'bg-black';
+            else if (app.name === 'TikTok') bg = 'bg-black';
+            else if (app.name === 'Facebook') bg = 'bg-[#1877F2]';
+            else if (app.name === 'X') bg = 'bg-black';
+            else if (app.name === 'Netflix') bg = 'bg-black';
+            else if (app.name === 'Spotify') bg = 'bg-black';
+
             const newApp = {
               id: app.id,
               name: app.name,
               url: app.url,
               widgetInfo: app.widgetInfo,
-              icon: <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />,
-              bg: 'bg-white',
+              icon: <img src={app.iconSrc} alt={app.name} className={`w-full h-full ${['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'object-cover' : 'object-contain'} ${bg === 'bg-white' && !['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'p-1' : ''} ${app.name === 'BBC News' ? 'invert' : ''} ${app.name === 'X' ? 'invert' : ''}`} />,
+              bg,
               isPinned: app.isPinned ?? true
             };
             const newAppIndex = currentApps.length;
@@ -598,16 +625,22 @@ export default function App() {
             setActiveCategory('Popular');
             setSelectedIndex(0);
           } else if (selectedIndex === 8) {
-            setActiveCategory('Game');
-            setSelectedIndex(0);
-          } else if (selectedIndex === 9) {
             setActiveCategory('Social');
             setSelectedIndex(0);
+          } else if (selectedIndex === 9) {
+            setActiveCategory('News');
+            setSelectedIndex(0);
           } else if (selectedIndex === 10) {
-            setActiveCategory('Studies');
+            setActiveCategory('Media');
             setSelectedIndex(0);
           } else if (selectedIndex === 11) {
-            setActiveCategory('Education');
+            setActiveCategory('Tools');
+            setSelectedIndex(0);
+          } else if (selectedIndex === 12) {
+            setActiveCategory('Game');
+            setSelectedIndex(0);
+          } else if (selectedIndex === 13) {
+            setActiveCategory('All');
             setSelectedIndex(0);
           } else {
             const newApps = apps.filter(app => (app.location || '').toLowerCase() === 'new');
@@ -724,10 +757,12 @@ export default function App() {
           const categoryIndexMap: Record<string, number> = {
             'New': 0,
             'Popular': 4,
-            'Game': 8,
-            'Social': 9,
-            'Studies': 10,
-            'Education': 11
+            'Social': 8,
+            'News': 9,
+            'Media': 10,
+            'Tools': 11,
+            'Game': 12,
+            'All': 13
           };
           setSelectedIndex(categoryIndexMap[activeCategory] ?? 0);
           setActiveCategory('none');
@@ -751,7 +786,7 @@ export default function App() {
           setSelectedIndex(4);
         } else if (selectedIndex === 8) {
           setSelectedIndex(5); // Go to first app in Popular, or 4 if none
-        } else if (selectedIndex >= 9 && selectedIndex <= 11) {
+        } else if (selectedIndex >= 9 && selectedIndex <= 13) {
           setSelectedIndex(prev => prev - 1);
         }
       } else if (dir === 'down') {
@@ -759,9 +794,9 @@ export default function App() {
         else if (selectedIndex >= 1 && selectedIndex <= 3) setSelectedIndex(4);
         else if (selectedIndex === 4) setSelectedIndex(5);
         else if (selectedIndex >= 5 && selectedIndex <= 7) setSelectedIndex(8);
-        else if (selectedIndex >= 8 && selectedIndex <= 10) setSelectedIndex(prev => prev + 1);
+        else if (selectedIndex >= 8 && selectedIndex <= 12) setSelectedIndex(prev => prev + 1);
       } else if (dir === 'left') {
-        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 11)) {
+        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 13)) {
           // Do nothing
         } else if (selectedIndex === 1 || selectedIndex === 5) {
           setFocusArea('header');
@@ -769,7 +804,7 @@ export default function App() {
           setSelectedIndex(prev => prev - 1);
         }
       } else if (dir === 'right') {
-        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 11)) {
+        if (selectedIndex === 0 || selectedIndex === 4 || (selectedIndex >= 8 && selectedIndex <= 13)) {
           setActiveTab(1);
           setSelectedIndex(0);
         } else if (selectedIndex === 1 || selectedIndex === 2 || selectedIndex === 5 || selectedIndex === 6) {
