@@ -461,45 +461,169 @@ export default function App() {
   React.useEffect(() => {
     const fetchApps = async () => {
       try {
-        const res = await fetch('/api/apps');
-        if (res.ok) {
-          const customApps = await res.json();
-          
-          let currentApps: any[] = [];
-          let currentNew: number[] = [];
-          let currentPopular: number[] = [];
+        const customApps = [
+          {
+            id: "Instagram",
+            name: "Instagram",
+            url: "https://www.instagram.com",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Instagram_logo_2016.svg/2048px-Instagram_logo_2016.svg.png",
+            location: "Social",
+            isPinned: true,
+            order: 1
+          },
+          {
+            id: "BBC News",
+            name: "BBC News",
+            url: "https://www.bbc.com/news",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_Logo_2021.svg/1024px-BBC_Logo_2021.svg.png",
+            location: "News",
+            isPinned: true,
+            order: 2
+          },
+          {
+            id: "CloudChat",
+            name: "CloudChat",
+            url: "https://cloudchat.com",
+            iconSrc: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
+            location: "Social",
+            isPinned: true,
+            order: 3
+          },
+          {
+            id: "Weather",
+            name: "Weather",
+            url: "https://weather.com",
+            iconSrc: "https://cdn-icons-png.flaticon.com/512/1163/1163661.png",
+            location: "Tools",
+            isPinned: true,
+            order: 4
+          },
+          {
+            id: "YouTube",
+            name: "YouTube",
+            url: "https://www.youtube.com",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/YouTube_full-color_icon_%282017%29.svg/2560px-YouTube_full-color_icon_%282017%29.svg.png",
+            location: "Media",
+            isPinned: true,
+            order: 5
+          },
+          {
+            id: "TikTok",
+            name: "TikTok",
+            url: "https://www.tiktok.com",
+            iconSrc: "https://cdn-icons-png.flaticon.com/512/3046/3046121.png",
+            location: "Social",
+            isPinned: true,
+            order: 6
+          },
+          {
+            id: "Facebook",
+            name: "Facebook",
+            url: "https://www.facebook.com",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/1024px-Facebook_Logo_%282019%29.png",
+            location: "Social",
+            isPinned: true,
+            order: 7
+          },
+          {
+            id: "Music",
+            name: "Music",
+            url: "https://music.youtube.com",
+            iconSrc: "https://cdn-icons-png.flaticon.com/512/3024/3024593.png",
+            location: "Media",
+            isPinned: true,
+            order: 8
+          },
+          {
+            id: "Gemini",
+            name: "Gemini",
+            url: "https://gemini.google.com",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Gemini_logo.svg/1024px-Google_Gemini_logo.svg.png",
+            location: "Tools",
+            isPinned: true,
+            order: 9
+          },
+          {
+            id: "WhatsApp",
+            name: "WhatsApp",
+            url: "https://web.whatsapp.com/",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
+            location: "Social",
+            isPinned: true,
+            order: 10
+          },
+          {
+            id: "X",
+            name: "X",
+            url: "https://x.com/",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/X_logo_2023.svg/512px-X_logo_2023.svg.png",
+            location: "Social",
+            isPinned: true,
+            order: 11
+          },
+          {
+            id: "Netflix",
+            name: "Netflix",
+            url: "https://www.netflix.com/",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Netflix_2015_N_logo.svg/512px-Netflix_2015_N_logo.svg.png",
+            location: "Media",
+            isPinned: true,
+            order: 12
+          },
+          {
+            id: "Spotify",
+            name: "Spotify",
+            url: "https://open.spotify.com/",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/512px-Spotify_logo_without_text.svg.png",
+            location: "Media",
+            isPinned: true,
+            order: 13
+          },
+          {
+            id: "Google Maps",
+            name: "Google Maps",
+            url: "https://maps.google.com/",
+            iconSrc: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Google_Maps_icon_%282020%29.svg/512px-Google_Maps_icon_%282020%29.svg.png",
+            location: "Tools",
+            isPinned: true,
+            order: 14
+          }
+        ];
+        
+        let currentApps: any[] = [];
+        let currentNew: number[] = [];
+        let currentPopular: number[] = [];
 
-          customApps.forEach((app: any) => {
-            let bg = 'bg-white';
-            if (app.name === 'BBC News') bg = 'bg-black';
-            else if (app.name === 'Weather') bg = 'bg-black';
-            else if (app.name === 'TikTok') bg = 'bg-black';
-            else if (app.name === 'Facebook') bg = 'bg-[#1877F2]';
-            else if (app.name === 'X') bg = 'bg-black';
-            else if (app.name === 'Netflix') bg = 'bg-black';
-            else if (app.name === 'Spotify') bg = 'bg-black';
+        customApps.forEach((app: any) => {
+          let bg = 'bg-white';
+          if (app.name === 'BBC News') bg = 'bg-black';
+          else if (app.name === 'Weather') bg = 'bg-black';
+          else if (app.name === 'TikTok') bg = 'bg-black';
+          else if (app.name === 'Facebook') bg = 'bg-[#1877F2]';
+          else if (app.name === 'X') bg = 'bg-black';
+          else if (app.name === 'Netflix') bg = 'bg-black';
+          else if (app.name === 'Spotify') bg = 'bg-black';
 
-            const newApp = {
-              id: app.id,
-              name: app.name,
-              url: app.url,
-              widgetInfo: app.widgetInfo,
-              icon: <img src={app.iconSrc} alt={app.name} className={`w-full h-full ${['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'object-cover' : 'object-contain'} ${bg === 'bg-white' && !['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'p-1' : ''} ${app.name === 'BBC News' ? 'invert' : ''} ${app.name === 'X' ? 'invert' : ''}`} />,
-              bg,
-              isPinned: app.isPinned ?? true
-            };
-            const newAppIndex = currentApps.length;
-            currentApps.push(newApp);
-            currentNew.push(newAppIndex);
-            if ((app.location || '').toLowerCase() === 'popular') {
-              currentPopular.push(newAppIndex);
-            }
-          });
+          const newApp = {
+            id: app.id,
+            name: app.name,
+            url: app.url,
+            widgetInfo: app.widgetInfo,
+            icon: <img src={app.iconSrc} alt={app.name} className={`w-full h-full ${['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'object-cover' : 'object-contain'} ${bg === 'bg-white' && !['Facebook', 'Instagram', 'TikTok', 'WhatsApp', 'X', 'Netflix', 'Spotify', 'Google Maps'].includes(app.name) ? 'p-1' : ''} ${app.name === 'BBC News' ? 'invert' : ''} ${app.name === 'X' ? 'invert' : ''}`} />,
+            bg,
+            isPinned: app.isPinned ?? true
+          };
+          const newAppIndex = currentApps.length;
+          currentApps.push(newApp);
+          currentNew.push(newAppIndex);
+          if ((app.location || '').toLowerCase() === 'popular') {
+            currentPopular.push(newAppIndex);
+          }
+        });
 
-          setApps(currentApps);
-          setNewCategoryApps(currentNew);
-          setPopularCategoryApps(currentPopular);
-        }
+        setApps(currentApps);
+        setNewCategoryApps(currentNew);
+        setPopularCategoryApps(currentPopular);
       } catch (error) {
         console.error('Failed to fetch custom apps:', error);
       }
